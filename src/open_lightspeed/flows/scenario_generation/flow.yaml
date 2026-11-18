@@ -1,0 +1,181 @@
+metadata:
+  name: K8s Scenario Generation
+  description: Generates diverse Kubernetes troubleshooting scenarios as deployment-ready manifests. An LLM designs failure scenarios across 15 categories, generates valid K8s YAML manifests, and a quality judge filters for realism, diagnosability,
+    and distinctiveness from held-out evaluation scenarios.
+  version: 1.0.0
+  author: SDG Hub Contributors
+  license: Apache-2.0
+  tags:
+  - agentic
+  - kubernetes
+  - troubleshooting
+  - scenario-generation
+  - openshift
+  dataset_requirements:
+    required_columns:
+    - failure_category
+    - category_description
+    - example_root_cause
+    - complexity
+    - resource_types_pool
+    - image_registry_pool
+    - available_mcp_tools
+    - excluded_scenarios
+    description: 'Seed dataset with failure categories. Each row defines a failure type with: failure_category (identifier), category_description (what breaks), example_root_cause (concrete example), complexity (easy/medium/hard), resource_types_pool
+      (list of K8s resource types), image_registry_pool (list of allowed container images), available_mcp_tools (list of tool names), excluded_scenarios (description of held-out eval scenarios to avoid).'
+  id: whole-thunder-38
+blocks:
+- block_type: RowMultiplierBlock
+  block_config:
+    block_name: multiply_category_rows
+    num_samples: 4
+    shuffle: true
+- block_type: SamplerBlock
+  block_config:
+    block_name: sample_resource_types
+    input_cols:
+    - resource_types_pool
+    output_cols:
+    - sampled_resources
+    num_samples: 3
+- block_type: SamplerBlock
+  block_config:
+    block_name: sample_base_image
+    input_cols:
+    - image_registry_pool
+    output_cols:
+    - base_image
+    num_samples: 1
+- block_type: PromptBuilderBlock
+  block_config:
+    block_name: build_scenario_design_prompt
+    input_cols:
+      failure_category: failure_category
+      category_description: category_description
+      example_root_cause: example_root_cause
+      complexity: complexity
+      sampled_resources: sampled_resources
+      base_image: base_image
+      available_mcp_tools: available_mcp_tools
+      excluded_scenarios: excluded_scenarios
+    output_cols: scenario_design_messages
+    prompt_config_path: prompts/scenario_design.yaml
+- block_type: LLMChatBlock
+  block_config:
+    block_name: design_scenario
+    input_cols: scenario_design_messages
+    output_cols: scenario_design_response
+    async_mode: true
+- block_type: LLMResponseExtractorBlock
+  block_config:
+    block_name: extract_scenario_design
+    input_cols: scenario_design_response
+    field_prefix: scenario_design_
+    extract_content: true
+- block_type: TagParserBlock
+  block_config:
+    block_name: parse_scenario_fields
+    input_cols: scenario_design_content
+    output_cols:
+    - scenario_name
+    - scenario_description
+    - namespace
+    - root_cause
+    - difficulty
+    - expected_tools
+    - resource_list
+    start_tags:
+    - <scenario_name>
+    - <scenario_description>
+    - <namespace>
+    - <root_cause>
+    - <difficulty>
+    - <expected_tools>
+    - <resource_list>
+    end_tags:
+    - </scenario_name>
+    - </scenario_description>
+    - </namespace>
+    - </root_cause>
+    - </difficulty>
+    - </expected_tools>
+    - </resource_list>
+- block_type: PromptBuilderBlock
+  block_config:
+    block_name: build_manifest_prompt
+    input_cols:
+      scenario_name: scenario_name
+      scenario_description: scenario_description
+      namespace: namespace
+      root_cause: root_cause
+      difficulty: difficulty
+      resource_list: resource_list
+      base_image: base_image
+    output_cols: manifest_messages
+    prompt_config_path: prompts/manifest_generation.yaml
+- block_type: LLMChatBlock
+  block_config:
+    block_name: generate_manifests
+    input_cols: manifest_messages
+    output_cols: manifest_response
+    async_mode: true
+- block_type: LLMResponseExtractorBlock
+  block_config:
+    block_name: extract_manifest_response
+    input_cols: manifest_response
+    field_prefix: manifest_
+    extract_content: true
+- block_type: TagParserBlock
+  block_config:
+    block_name: parse_manifests
+    input_cols: manifest_content
+    output_cols:
+    - manifests
+    start_tags:
+    - <manifests>
+    end_tags:
+    - </manifests>
+- block_type: PromptBuilderBlock
+  block_config:
+    block_name: build_quality_check_prompt
+    input_cols:
+      scenario_name: scenario_name
+      scenario_description: scenario_description
+      namespace: namespace
+      root_cause: root_cause
+      difficulty: difficulty
+      expected_tools: expected_tools
+      manifests: manifests
+    output_cols: quality_check_messages
+    prompt_config_path: prompts/scenario_quality_check.yaml
+- block_type: LLMChatBlock
+  block_config:
+    block_name: score_quality
+    input_cols: quality_check_messages
+    output_cols: quality_check_response
+    async_mode: true
+- block_type: LLMResponseExtractorBlock
+  block_config:
+    block_name: extract_quality_score
+    input_cols: quality_check_response
+    field_prefix: quality_
+    extract_content: true
+- block_type: TagParserBlock
+  block_config:
+    block_name: parse_quality_rating
+    input_cols: quality_content
+    output_cols:
+    - scenario_quality_rating
+    start_tags:
+    - <scenario_quality_rating>
+    end_tags:
+    - </scenario_quality_rating>
+- block_type: ColumnValueFilterBlock
+  block_config:
+    block_name: filter_low_quality
+    input_cols:
+    - scenario_quality_rating
+    filter_value:
+    - good
+    - excellent
+    operation: eq

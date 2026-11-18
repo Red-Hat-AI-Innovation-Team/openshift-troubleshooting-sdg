@@ -1,0 +1,78 @@
+- role: system
+  content: |
+    You are a quality assessor for Kubernetes troubleshooting scenarios. Evaluate the scenario across four dimensions and provide an overall quality rating.
+
+- role: user
+  content: |
+    ## Scenario to Evaluate
+
+    **Name:** {{scenario_name}}
+    **Namespace:** {{namespace}}
+    **Description:** {{scenario_description}}
+    **Root Cause:** {{root_cause}}
+    **Difficulty:** {{difficulty}}
+    **Expected Tools:** {{expected_tools}}
+
+    ### Manifests
+    ```yaml
+    {{manifests}}
+    ```
+
+    ## Evaluation Criteria
+
+    ### 1. Realism
+    Would this failure actually happen in a production Kubernetes cluster?
+    - poor: Contrived or impossible failure mode
+    - acceptable: Possible but unlikely
+    - good: Realistic, happens occasionally
+    - excellent: Very common production issue
+
+    ### 2. Diagnosability
+    Can an agent diagnose this using standard K8s investigation tools (list pods, get pod details, read logs, list events, get resources)?
+    - poor: Root cause not discoverable via available tools
+    - acceptable: Requires obscure tool usage or guesswork
+    - good: Diagnosable with 2-5 standard tool calls
+    - excellent: Clear diagnostic path with unambiguous evidence
+
+    ### 3. YAML Validity
+    Are the manifests syntactically correct and deployable?
+    - poor: Multiple YAML syntax errors or missing required fields
+    - acceptable: Minor issues that might cause warnings
+    - good: Valid YAML, all required fields present, correct label matching
+    - excellent: Production-quality manifests with proper naming and structure
+
+    ### 4. Distinctiveness
+    Does this scenario avoid duplicating the held-out evaluation scenarios?
+    Held-out scenarios to avoid: (1) OOM/memory leak with exit code 137, (2) NetworkPolicy label mismatch, (3) Cross-namespace PostgreSQL connection exhaustion.
+    - poor: Nearly identical to a held-out scenario
+    - acceptable: Similar category but different root cause
+    - good: Different failure pattern entirely
+    - excellent: Novel failure mode not covered by any held-out scenario
+
+    ## Output
+
+    Provide your assessment with reasoning for each dimension.
+
+    <response>
+      <realism>
+        <reasoning><!-- Brief explanation --></reasoning>
+        <realism_rating><!-- poor, acceptable, good, excellent --></realism_rating>
+      </realism>
+
+      <diagnosability>
+        <reasoning><!-- Brief explanation --></reasoning>
+        <diagnosability_rating><!-- poor, acceptable, good, excellent --></diagnosability_rating>
+      </diagnosability>
+
+      <yaml_validity>
+        <reasoning><!-- Brief explanation --></reasoning>
+        <yaml_validity_rating><!-- poor, acceptable, good, excellent --></yaml_validity_rating>
+      </yaml_validity>
+
+      <distinctiveness>
+        <reasoning><!-- Brief explanation --></reasoning>
+        <distinctiveness_rating><!-- poor, acceptable, good, excellent --></distinctiveness_rating>
+      </distinctiveness>
+
+      <scenario_quality_rating><!-- Overall: poor, acceptable, good, excellent. Rate as the minimum of the four dimensions. --></scenario_quality_rating>
+    </response>

@@ -1,0 +1,33 @@
+[project]
+name = "open-lightspeed"
+version = "0.1.0"
+description = "Training pipeline for OpenShift Lightspeed — synthetic data generation for K8s troubleshooting agents"
+requires-python = ">=3.10"
+dependencies = [
+    "sdg-hub @ git+https://github.com/Red-Hat-AI-Innovation-Team/sdg_hub.git@7363ab7404675480a653013d6cb4b48dadc3d7f4",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "mcp>=1.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/open_lightspeed"]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

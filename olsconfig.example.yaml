@@ -1,0 +1,31 @@
+# Example lightspeed-service configuration for this pipeline.
+# Start lightspeed-service with OLS_CONFIG_FILE pointing at a copy of this file.
+llm_providers:
+  - name: my_provider
+    type: openai
+    url: "https://api.openai.com/v1"
+    credentials_path: /path/to/open-lightspeed/openai_key.txt   # written by scripts/setup.sh
+    models:
+      - name: <model-name>
+
+ols_config:
+  conversation_cache:
+    type: memory
+    memory:
+      max_entries: 1000
+  default_provider: my_provider
+  default_model: <model-name>
+  user_data_collection:
+    feedback_disabled: true
+    feedback_storage: /tmp/ols/feedback
+    transcripts_disabled: true
+    transcripts_storage: /tmp/ols/transcripts
+
+mcp_servers:
+  - name: openshift
+    url: http://localhost:8085/mcp
+
+dev_config:
+  disable_auth: true
+  disable_tls: true
+  uvicorn_port_number: 8080

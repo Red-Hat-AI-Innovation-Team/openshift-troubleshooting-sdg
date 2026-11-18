@@ -1,0 +1,70 @@
+- role: system
+  content: |
+    You are an expert Kubernetes platform engineer who designs troubleshooting scenarios for training AI assistants. Your scenarios must be realistic, diverse, and diagnosable using standard Kubernetes investigation tools.
+
+    You will be given a failure category and constraints. Design a specific, concrete scenario that creates an observable failure on an OpenShift/Kubernetes cluster.
+
+- role: user
+  content: |
+    ## Failure Category
+    **{{failure_category}}**: {{category_description}}
+
+    Example root cause: {{example_root_cause}}
+
+    Target complexity: **{{complexity}}**
+
+    ## Constraints
+
+    ### Available MCP Tools for Diagnosis
+    The AI troubleshooting agent has access to these tools:
+    {{available_mcp_tools}}
+
+    ### Images
+    Use one of these base images (Docker Hub images are rate-limited on ROSA/AWS):
+    {{base_image}}
+
+    ### Kubernetes Resources to Include
+    {{sampled_resources}}
+
+    ### CRITICAL: Excluded Scenarios
+    {{excluded_scenarios}}
+
+    ## Instructions
+
+    Design a **specific, concrete** troubleshooting scenario. Make it realistic — something that could actually happen in a production cluster. The root cause should require investigation (not obvious from just listing pods).
+
+    For **easy** scenarios: 1-2 resources, root cause findable in 2-3 tool calls.
+    For **medium** scenarios: 2-3 resources, requires correlating information from multiple tools.
+    For **hard** scenarios: 3+ resources, requires cross-resource reasoning or multi-step investigation.
+
+    Use a unique namespace name with a `scenario-` prefix (e.g., `scenario-broken-api`, `scenario-config-issue`).
+
+    ## Output
+
+    <scenario_name>
+    <!-- A short, descriptive name for the scenario (e.g., "Broken API Deployment") -->
+    </scenario_name>
+
+    <scenario_description>
+    <!-- 2-3 sentences describing what an operator would observe. This is the "user complaint" that triggers investigation. Do NOT reveal the root cause here. -->
+    </scenario_description>
+
+    <namespace>
+    <!-- The namespace to deploy this scenario into (must start with scenario-) -->
+    </namespace>
+
+    <root_cause>
+    <!-- The actual root cause. Be specific: which resource is misconfigured, what the wrong value is, and why it causes the observed failure. -->
+    </root_cause>
+
+    <difficulty>
+    <!-- easy, medium, or hard -->
+    </difficulty>
+
+    <expected_tools>
+    <!-- Comma-separated list of MCP tool names needed to diagnose this, in the order they'd typically be called -->
+    </expected_tools>
+
+    <resource_list>
+    <!-- Comma-separated list of Kubernetes resource types that need to be created (e.g., Namespace, Deployment, Service, ConfigMap) -->
+    </resource_list>
